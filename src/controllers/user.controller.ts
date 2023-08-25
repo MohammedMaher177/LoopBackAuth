@@ -38,7 +38,6 @@ import {inject} from '@loopback/core';
 import {SecurityBindings, UserProfile, securityId} from '@loopback/security';
 import {compare, genSalt, hash} from 'bcryptjs';
 // import _ from 'lodash';
-
 @model()
 export class NewUserRequest extends User {
   @property({
@@ -108,8 +107,6 @@ export class UserController {
   async login(
     @requestBody(CredentialsRequestBody) credentials: Credentials,
   ): Promise<{token: string}> {
-    // const {email, password} = credentials;
-    // ensure the user exists, and the password is correct
     const existUser: User | null = await this.userRepository.findOne({
       where: {email: credentials.email},
     });
@@ -123,10 +120,10 @@ export class UserController {
         const token = await this.jwtService.generateToken(userProfile);
         return {token};
       } else {
-        throw new HttpErrors.Unauthorized('Invalid email or password.');
+        throw new HttpErrors.Unauthorized('Invalid password.');
       }
     } else {
-      throw new HttpErrors.Unauthorized('Invalid email or password.');
+      throw new HttpErrors.Unauthorized('Invalid email.');
     }
   }
 
@@ -283,7 +280,7 @@ export class UserController {
   ): Promise<User | UserRelations> {
     return this.userRepository.findById(id, filter);
   }
-
+  @authenticate('jwt')
   @patch('/users/{id}')
   @response(204, {
     description: 'User PATCH success',
@@ -297,9 +294,22 @@ export class UserController {
         },
       },
     })
+    @param.header.string('Authorization')
+    yourHeader: string,
     user: User,
-  ): Promise<void> {
+  ): Promise<User | UserRelations> {
+    yourHeader = yourHeader.replace('Bearer ', '');
+    const {id: userId} = await this.jwtService.verifyToken(yourHeader);
+
+    if (userId !== id) {
+      throw new HttpErrors.Unauthorized('Not Authorized.');
+    }
+    if (user?.password) {
+      user.password = await hash(user.password, await genSalt());
+    }
     await this.userRepository.updateById(id, user);
+    const updated: User = await this.userRepository.findById(id);
+    return updated;
   }
 
   @put('/users/{id}')
