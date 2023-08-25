@@ -8,6 +8,7 @@ import {
   property,
 } from '@loopback/repository';
 import {
+  HttpErrors,
   SchemaObject,
   del,
   get,
@@ -35,7 +36,7 @@ import {
 } from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
 import {SecurityBindings, UserProfile, securityId} from '@loopback/security';
-import {genSalt, hash} from 'bcryptjs';
+import {compare, genSalt, hash} from 'bcryptjs';
 // import _ from 'lodash';
 
 @model()
@@ -82,8 +83,8 @@ export class UserController {
     private user: UserProfile,
     @inject(UserServiceBindings.USER_REPOSITORY)
     public userRepository: UserRepository, // @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
-  ) // public refreshService: RefreshTokenService,
-  {}
+    // public refreshService: RefreshTokenService,
+  ) {}
 
   @post('/auth/login', {
     responses: {
@@ -107,15 +108,26 @@ export class UserController {
   async login(
     @requestBody(CredentialsRequestBody) credentials: Credentials,
   ): Promise<{token: string}> {
+    // const {email, password} = credentials;
     // ensure the user exists, and the password is correct
-    const user = await this.userService.verifyCredentials(credentials);
-
-    // convert a User object into a UserProfile object (reduced set of properties)
-    const userProfile = this.userService.convertToUserProfile(user);
-
-    // create a JSON Web Token based on the user profile
-    const token = await this.jwtService.generateToken(userProfile);
-    return {token};
+    const existUser: User | null = await this.userRepository.findOne({
+      where: {email: credentials.email},
+    });
+    if (existUser) {
+      const passwordMatched = await compare(
+        credentials.password,
+        existUser.password,
+      );
+      if (passwordMatched) {
+        const userProfile = this.userService.convertToUserProfile(existUser);
+        const token = await this.jwtService.generateToken(userProfile);
+        return {token};
+      } else {
+        throw new HttpErrors.Unauthorized('Invalid email or password.');
+      }
+    } else {
+      throw new HttpErrors.Unauthorized('Invalid email or password.');
+    }
   }
 
   @authenticate('jwt')
