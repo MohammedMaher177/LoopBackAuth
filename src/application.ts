@@ -16,7 +16,9 @@ import path from 'path';
 import {MongoDataSource} from './datasources';
 import {MySequence} from './sequence';
 
-
+import {registerAuthenticationStrategy} from '@loopback/authentication'
+import {BasicAuthenticationStrategy} from './Auth';
+import {BasicAuthenticationUserService} from './Auth/services/basic-auth-user-service';
 
 
 export {ApplicationConfig};
@@ -55,5 +57,13 @@ export class App2Application extends BootMixin(
     this.component(JWTAuthenticationComponent);
     // Bind datasource
     this.dataSource(MongoDataSource, UserServiceBindings.DATASOURCE_NAME);
+
+    registerAuthenticationStrategy(this, BasicAuthenticationStrategy);
+
+    this.bind('services.authentication.basic.user.service').toClass(
+      BasicAuthenticationUserService,
+    );
+    
+
   }
 }

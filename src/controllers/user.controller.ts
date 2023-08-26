@@ -26,7 +26,6 @@ import {UserRepository} from '../repositories';
 import {
   TokenService,
   UserService,
-  authenticate,
 } from '@loopback/authentication';
 import {
   Credentials,
@@ -37,6 +36,7 @@ import {
 import {inject} from '@loopback/core';
 import {SecurityBindings, UserProfile, securityId} from '@loopback/security';
 import {compare, genSalt, hash} from 'bcryptjs';
+import {authenticate} from '../Auth';
 // import _ from 'lodash';
 @model()
 export class NewUserRequest extends User {
@@ -79,12 +79,12 @@ export class UserController {
     @inject(UserServiceBindings.USER_SERVICE)
     public userService: UserService<User, Credentials>,
     @inject(SecurityBindings.USER, {optional: true})
-    private user: UserProfile,
+    public user: UserProfile,
     @inject(UserServiceBindings.USER_REPOSITORY)
     public userRepository: UserRepository, // @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
     // public refreshService: RefreshTokenService,
-  ) {}
-
+  ) { }
+  @authenticate("basic")
   @post('/auth/login', {
     responses: {
       '200': {
@@ -127,7 +127,7 @@ export class UserController {
     }
   }
 
-  @authenticate('jwt')
+
   @get('/whoAmI', {
     responses: {
       '200': {

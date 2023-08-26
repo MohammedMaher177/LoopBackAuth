@@ -59,6 +59,7 @@
     "@loopback/rest": "^13.1.2",
     "@loopback/rest-explorer": "^6.1.2",
     "@loopback/service-proxy": "^6.1.2",
+    "@types/passport-http": "^0.3.9",
     "bcryptjs": "^2.4.3",
     "lodash": "^4.17.21",
     "loopback-connector-mongodb": "^5.6.0",
