@@ -59,8 +59,10 @@ export class AuthenticationStrategyProvider
 
     const findStrategy = (name: string) => {
       const strategy = existingStrategies.find(a => a.name === name);
+
       if (!strategy) {
         const error = new Error(`The strategy '${name}' is not available.`);
+
         Object.assign(error, {
           code: AUTHENTICATION_STRATEGY_NOT_FOUND,
         });

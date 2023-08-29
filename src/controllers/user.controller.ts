@@ -84,7 +84,7 @@ export class UserController {
     public userRepository: UserRepository, // @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
     // public refreshService: RefreshTokenService,
   ) { }
-  @authenticate("basic")
+  // @authenticate("basic")
   @post('/auth/login', {
     responses: {
       '200': {
@@ -127,7 +127,7 @@ export class UserController {
     }
   }
 
-
+  @authenticate("my-custom")
   @get('/whoAmI', {
     responses: {
       '200': {
@@ -175,26 +175,35 @@ export class UserController {
     })
     newUserRequest: NewUserRequest,
   ): Promise<User | UserRelations> {
-    const email: string | undefined = newUserRequest.email;
-    const {count} = await this.userRepository.count({email});
+    try {
+      const email: string | undefined = newUserRequest.email;
+      if (!email) {
+        throw new HttpErrors.Unauthorized(`Authorization header not found.`);
 
-    if (count) {
-      return {message: 'error', param: 'Email Already Exist'};
-    }
-    const password = await hash(newUserRequest.password, await genSalt());
+      }
+      const {count} = await this.userRepository.count({email});
 
-    newUserRequest.password = password;
-    const savedUser = await this.userRepository.create(newUserRequest);
-    const id: string | undefined = savedUser.id;
-    if (id) {
-      const token = await this.jwtService.generateToken({
-        savedUser,
-        [securityId]: id,
-      });
-      console.log(token);
-      return {message: 'success', token};
-    } else {
-      throw new Error('Invalid');
+      if (count) {
+        return {message: 'error', param: 'Email Already Exist'};
+      }
+      const password = await hash(newUserRequest.password, await genSalt());
+
+      newUserRequest.password = password;
+      const savedUser = await this.userRepository.create(newUserRequest);
+      const id: string | undefined = savedUser.id;
+      if (id) {
+        const token = await this.jwtService.generateToken({
+          savedUser,
+          [securityId]: id,
+        });
+        console.log(token);
+        return {message: 'success', token};
+      } else {
+        throw new Error('Invalid');
+      }
+    } catch (error) {
+      throw new HttpErrors.BadRequest(`catch error.`);
+
     }
   }
 

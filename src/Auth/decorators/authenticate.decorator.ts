@@ -43,7 +43,8 @@ export function authenticate(
     methodDescriptor?: TypedPropertyDescriptor<any>,
   ) {
     const specs: AuthenticationMetadata[] = [];
-
+    console.log(strategies);
+    
     for (const strategy of strategies) {
       if (typeof strategy === 'object') {
         specs.push(strategy);
@@ -52,7 +53,7 @@ export function authenticate(
       }
     }
 
-    
+
 
     if (method && methodDescriptor) {
       // Method

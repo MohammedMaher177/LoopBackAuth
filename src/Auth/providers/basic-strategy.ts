@@ -33,6 +33,8 @@ export class BasicAuthenticationStrategy
   ) {  }
 
   async authenticate(request: Request): Promise<UserProfile | undefined> {
+    console.log(111);
+
     const credentials: BasicAuthenticationStrategyCredentials =
       this.extractCredentials(request);
     const user = await this.userService.verifyCredentials(credentials);
@@ -42,6 +44,8 @@ export class BasicAuthenticationStrategy
   }
 
   extractCredentials(request: Request): BasicAuthenticationStrategyCredentials {
+    console.log(222);
+
     if (!request.headers.authorization) {
       throw new HttpErrors.Unauthorized(`Authorization header not found.`);
     }
@@ -87,6 +91,8 @@ export class BasicAuthenticationStrategy
   }
 
   modifySpec(spec: OpenApiSpec): OpenApiSpec {
+    console.log(333);
+
     return mergeSecuritySchemeToSpec(spec, this.name, {
       type: 'http',
       scheme: 'basic',
